@@ -49,15 +49,15 @@ export default function Sidebar({ open, onClose, user }: SidebarProps) {
     >
       <div className="flex flex-col h-full">
         {/* Logo and close button */}
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary to-secondary">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
+            <div className="w-8 h-8 rounded-md bg-white bg-opacity-20 flex items-center justify-center backdrop-blur-sm">
               <i className="fas fa-graduation-cap text-white"></i>
             </div>
-            <h1 className="text-xl font-semibold text-neutral-900">LearnTrack</h1>
+            <h1 className="text-xl font-semibold text-white">LearnTrack</h1>
           </div>
           <button 
-            className="md:hidden text-neutral-500 hover:text-neutral-700"
+            className="md:hidden text-white hover:text-neutral-200"
             onClick={onClose}
           >
             <i className="fas fa-times"></i>
@@ -67,32 +67,32 @@ export default function Sidebar({ open, onClose, user }: SidebarProps) {
         {/* Navigation */}
         <nav className="flex-grow py-4 px-2 space-y-1 overflow-y-auto">
           {navItems.map((item) => (
-            <Link 
-              key={item.name}
-              href={item.path}
-              onClick={onClose}
-            >
-              <a className={`flex items-center space-x-3 px-3 py-2 rounded-md transition-colors duration-200 ${
-                location === item.path
-                  ? "bg-primary bg-opacity-10 text-primary"
-                  : "text-neutral-700 hover:bg-neutral-100"
-              }`}>
-                <i className={`${item.icon} w-5`}></i>
-                <span>{item.name}</span>
-              </a>
-            </Link>
+            <div key={item.name} onClick={onClose}>
+              <Link href={item.path}>
+                <div className={`flex items-center space-x-3 px-3 py-2 rounded-md transition-all duration-200 cursor-pointer ${
+                  location === item.path
+                    ? "bg-primary bg-opacity-10 text-primary font-medium shadow-sm"
+                    : "text-neutral-700 hover:bg-neutral-100 hover:translate-x-1"
+                }`}>
+                  <i className={`${item.icon} w-5`}></i>
+                  <span>{item.name}</span>
+                </div>
+              </Link>
+            </div>
           ))}
         </nav>
         
         {/* User profile */}
-        <div className="border-t p-4">
+        <div className="border-t p-4 bg-neutral-50">
           <div className="flex items-center space-x-3">
             {user ? (
               <>
-                <img 
+                <motion.img 
                   src={user.avatarUrl || "https://via.placeholder.com/40"} 
                   alt="User avatar" 
-                  className="w-10 h-10 rounded-full object-cover"
+                  className="w-10 h-10 rounded-full object-cover border-2 border-primary shadow-md"
+                  whileHover={{ scale: 1.1 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 />
                 <div>
                   <p className="text-sm font-medium text-neutral-900">{user.fullName}</p>
