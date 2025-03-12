@@ -4,6 +4,20 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
+interface StudySession {
+  id: number;
+  subject: string;
+  topic?: string;
+  duration: string;
+}
+
+interface UserCourse {
+  courseId: number;
+  course: {
+    name: string;
+  };
+}
+
 export default function StudyTracker() {
   const [timerRunning, setTimerRunning] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -13,12 +27,12 @@ export default function StudyTracker() {
   const { toast } = useToast();
 
   // Fetch user courses for dropdown
-  const { data: userCourses } = useQuery({
+  const { data: userCourses } = useQuery<UserCourse[]>({
     queryKey: ['/api/user/courses'],
   });
 
   // Fetch recent study sessions
-  const { data: recentSessions, isLoading: isLoadingSessions } = useQuery({
+  const { data: recentSessions, isLoading: isLoadingSessions } = useQuery<StudySession[]>({
     queryKey: ['/api/user/study-sessions/recent'],
     queryFn: async () => {
       const res = await fetch('/api/user/study-sessions/recent?limit=3');
@@ -126,28 +140,40 @@ export default function StudyTracker() {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow duration-300">
+    <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 glass-effect card-hover">
       <div className="flex justify-between items-start mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-neutral-900">Study Tracker</h3>
+          <h3 className="text-lg font-semibold text-neutral-900 flex items-center">
+            <span className="inline-block mr-2 text-purple-500">
+              <i className="fas fa-stopwatch"></i>
+            </span>
+            Study Tracker
+          </h3>
           <p className="text-sm text-neutral-500">Track your study time</p>
         </div>
-        <button className="text-primary hover:text-primary-dark">
+        <motion.button 
+          className="text-purple-500 hover:text-purple-700 transition-colors"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+        >
           <i className="fas fa-expand-alt"></i>
-        </button>
+        </motion.button>
       </div>
       
       <div className="mb-6">
         <div className="mb-4">
-          <label className="block text-sm font-medium text-neutral-700 mb-1">Subject</label>
+          <label className="block text-sm font-medium text-neutral-700 mb-1 flex items-center">
+            <i className="fas fa-book mr-2 text-purple-500/70"></i>
+            Subject
+          </label>
           <select 
-            className="w-full border border-neutral-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="w-full border border-neutral-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm transition"
             value={selectedCourse || ""}
             onChange={(e) => setSelectedCourse(Number(e.target.value) || null)}
             disabled={timerRunning}
           >
             <option value="">Select a subject</option>
-            {userCourses?.map((course: any) => (
+            {userCourses?.map((course) => (
               <option key={course.courseId} value={course.courseId}>
                 {course.course.name}
               </option>
@@ -156,10 +182,13 @@ export default function StudyTracker() {
         </div>
         
         <div className="mb-4">
-          <label className="block text-sm font-medium text-neutral-700 mb-1">Topic (optional)</label>
+          <label className="block text-sm font-medium text-neutral-700 mb-1 flex items-center">
+            <i className="fas fa-tags mr-2 text-purple-500/70"></i>
+            Topic (optional)
+          </label>
           <input 
             type="text" 
-            className="w-full border border-neutral-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="w-full border border-neutral-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm transition"
             placeholder="What are you studying?"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
@@ -168,16 +197,36 @@ export default function StudyTracker() {
         </div>
         
         <motion.div 
-          className="text-5xl font-bold text-neutral-900 tracking-wider my-6 text-center"
-          animate={{ 
-            scale: timerRunning ? [1, 1.02, 1] : 1,
-            transition: { 
-              repeat: timerRunning ? Infinity : 0, 
-              duration: 2 
-            }
-          }}
+          className="flex flex-col items-center my-8"
         >
-          {formatTime()}
+          <div className="relative">
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-purple-100 to-blue-100 rounded-full"
+              animate={{ 
+                opacity: timerRunning ? [0.5, 0.8, 0.5] : 0.3,
+                scale: timerRunning ? [1, 1.15, 1] : 1,
+                transition: { 
+                  repeat: timerRunning ? Infinity : 0, 
+                  duration: 2
+                }
+              }}
+            />
+            <motion.div 
+              className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600 tracking-wider relative p-6"
+              animate={{ 
+                scale: timerRunning ? [1, 1.02, 1] : 1,
+                transition: { 
+                  repeat: timerRunning ? Infinity : 0, 
+                  duration: 2 
+                }
+              }}
+            >
+              {formatTime()}
+            </motion.div>
+          </div>
+          <p className="text-sm text-neutral-600 mt-2">
+            {timerRunning ? 'Timer running...' : 'Timer paused'}
+          </p>
         </motion.div>
         
         <div className="flex justify-center space-x-4">
@@ -188,8 +237,10 @@ export default function StudyTracker() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="px-6 py-2 bg-success text-white rounded-md hover:bg-opacity-90 transition flex items-center"
+                className="px-6 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-md hover:shadow-md transition-all duration-300 flex items-center shadow"
                 onClick={handleStart}
+                whileHover={{ y: -2, boxShadow: '0 6px 15px rgba(0, 0, 0, 0.1)' }}
+                whileTap={{ y: 0 }}
               >
                 <i className="fas fa-play mr-2"></i> Start
               </motion.button>
@@ -200,8 +251,10 @@ export default function StudyTracker() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="px-6 py-2 bg-warning text-white rounded-md hover:bg-opacity-90 transition flex items-center"
+                  className="px-6 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-md hover:shadow-md transition-all duration-300 flex items-center shadow"
                   onClick={handlePause}
+                  whileHover={{ y: -2, boxShadow: '0 6px 15px rgba(0, 0, 0, 0.1)' }}
+                  whileTap={{ y: 0 }}
                 >
                   <i className="fas fa-pause mr-2"></i> Pause
                 </motion.button>
@@ -210,8 +263,10 @@ export default function StudyTracker() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="px-6 py-2 bg-danger text-white rounded-md hover:bg-opacity-90 transition flex items-center"
+                  className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-md hover:shadow-md transition-all duration-300 flex items-center shadow"
                   onClick={handleStop}
+                  whileHover={{ y: -2, boxShadow: '0 6px 15px rgba(0, 0, 0, 0.1)' }}
+                  whileTap={{ y: 0 }}
                 >
                   <i className="fas fa-stop mr-2"></i> Stop
                 </motion.button>
@@ -222,7 +277,10 @@ export default function StudyTracker() {
       </div>
       
       <div className="border-t pt-4">
-        <h4 className="text-sm font-semibold text-neutral-700 mb-3">Recent Sessions</h4>
+        <h4 className="text-sm font-semibold text-neutral-700 mb-3 flex items-center">
+          <i className="fas fa-history mr-2 text-purple-500/70"></i>
+          Recent Sessions
+        </h4>
         {isLoadingSessions ? (
           <div className="space-y-3 max-h-48 overflow-y-auto">
             {[1, 2, 3].map((i) => (
@@ -236,8 +294,8 @@ export default function StudyTracker() {
             ))}
           </div>
         ) : (
-          <div className="space-y-3 max-h-48 overflow-y-auto">
-            {recentSessions?.map((session: any, index: number) => (
+          <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+            {recentSessions?.map((session, index) => (
               <motion.div 
                 key={session.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -246,7 +304,8 @@ export default function StudyTracker() {
                   y: 0,
                   transition: { delay: index * 0.1 }
                 }}
-                className="flex justify-between items-center text-sm p-2 hover:bg-neutral-50 rounded"
+                whileHover={{ x: 5, backgroundColor: 'rgba(147, 51, 234, 0.05)' }}
+                className="flex justify-between items-center text-sm p-3 rounded-lg border border-neutral-100 shadow-sm transition-all duration-200"
               >
                 <div>
                   <span className="font-medium text-neutral-900">{session.subject}</span>
@@ -254,15 +313,25 @@ export default function StudyTracker() {
                     <span className="text-neutral-500 text-xs"> • {session.topic}</span>
                   )}
                 </div>
-                <div className="text-neutral-600">{session.duration}</div>
+                <div className="text-neutral-600 bg-purple-50 px-2 py-1 rounded-full text-xs font-medium">
+                  {session.duration}
+                </div>
               </motion.div>
             ))}
 
-            {recentSessions?.length === 0 && (
-              <p className="text-neutral-500 text-sm text-center py-2">No recent study sessions</p>
+            {!recentSessions || recentSessions.length === 0 && (
+              <p className="text-neutral-500 text-sm text-center py-4">No recent study sessions</p>
             )}
           </div>
         )}
+        
+        <motion.button 
+          className="w-full mt-3 text-center text-xs text-purple-600 hover:text-purple-800 py-2 transition-colors"
+          whileHover={{ y: -1 }}
+          whileTap={{ y: 0 }}
+        >
+          View all sessions <i className="fas fa-chevron-right ml-1"></i>
+        </motion.button>
       </div>
     </div>
   );

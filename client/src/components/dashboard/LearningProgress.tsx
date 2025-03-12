@@ -5,19 +5,35 @@ import { motion } from "framer-motion";
 export default function LearningProgress() {
   const [timeRange, setTimeRange] = useState("Last 30 days");
   
+  interface SubjectProgress {
+    userId: number;
+    subjectId: number;
+    progress: number;
+    subject: {
+      id: number;
+      name: string;
+    };
+  }
+
   // Fetch subject progress data
-  const { data: subjectProgress, isLoading } = useQuery({
+  const { data: subjectProgress, isLoading } = useQuery<SubjectProgress[]>({
     queryKey: ['/api/user/subjects/progress'],
   });
 
   // Calculate overall progress
-  const overallProgress = subjectProgress?.reduce((acc: number, curr: any) => acc + curr.progress, 0) / (subjectProgress?.length || 1);
+  const overallProgress = subjectProgress 
+    ? subjectProgress.reduce((acc: number, curr) => acc + curr.progress, 0) / (subjectProgress.length || 1)
+    : 0;
   
   // Count completed topics (progress > 90%)
-  const completedTopics = subjectProgress?.filter((subject: any) => subject.progress > 90).length || 0;
+  const completedTopics = subjectProgress 
+    ? subjectProgress.filter(subject => subject.progress > 90).length 
+    : 0;
   
   // Count focus areas (progress < 70%)
-  const focusAreas = subjectProgress?.filter((subject: any) => subject.progress < 70).length || 0;
+  const focusAreas = subjectProgress 
+    ? subjectProgress.filter(subject => subject.progress < 70).length 
+    : 0;
 
   const variants = {
     hidden: { opacity: 0, y: 20 },
@@ -167,28 +183,34 @@ export default function LearningProgress() {
           </motion.button>
         </div>
         <div className="flex items-end h-40 space-x-6 px-4">
-          {subjectProgress?.map((subject: any, index: number) => (
-            <motion.div 
-              key={subject.subject.id} 
-              className="flex flex-col items-center flex-1"
-              whileHover={{ y: -3 }}
-            >
-              <div className="w-full bg-neutral-100 rounded-lg overflow-hidden shadow-inner h-40 relative">
-                <motion.div 
-                  custom={subject.progress}
-                  initial="hidden"
-                  animate="visible"
-                  variants={chartVariants}
-                  className={`${getColorClass(index)} rounded-t-md absolute bottom-0 w-full`}
-                >
-                  <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-white font-bold text-xs py-1 px-2 rounded-full bg-black/30 backdrop-blur-sm">
-                    {subject.progress}%
-                  </div>
-                </motion.div>
-              </div>
-              <div className="text-xs font-medium text-neutral-700 mt-3 text-center">{subject.subject.name}</div>
-            </motion.div>
-          ))}
+          {subjectProgress && subjectProgress.length > 0 ? (
+            subjectProgress.map((subject, index) => (
+              <motion.div 
+                key={subject.subject.id} 
+                className="flex flex-col items-center flex-1"
+                whileHover={{ y: -3 }}
+              >
+                <div className="w-full bg-neutral-100 rounded-lg overflow-hidden shadow-inner h-40 relative">
+                  <motion.div 
+                    custom={subject.progress}
+                    initial="hidden"
+                    animate="visible"
+                    variants={chartVariants}
+                    className={`${getColorClass(index)} rounded-t-md absolute bottom-0 w-full`}
+                  >
+                    <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-white font-bold text-xs py-1 px-2 rounded-full bg-black/30 backdrop-blur-sm">
+                      {subject.progress}%
+                    </div>
+                  </motion.div>
+                </div>
+                <div className="text-xs font-medium text-neutral-700 mt-3 text-center">{subject.subject.name}</div>
+              </motion.div>
+            ))
+          ) : (
+            <div className="w-full text-center text-neutral-500 py-10">
+              No subject progress data available
+            </div>
+          )}
         </div>
       </div>
     </div>

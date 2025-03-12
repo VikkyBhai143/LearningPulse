@@ -105,18 +105,25 @@ export default function RecommendedMaterials() {
   }
 
   return (
-    <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow duration-300">
+    <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 glass-effect card-hover">
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-neutral-900">Recommended Next Steps</h3>
+          <h3 className="text-lg font-semibold text-neutral-900 flex items-center">
+            <span className="inline-block mr-2 text-blue-500">
+              <i className="fas fa-book-reader"></i>
+            </span>
+            Recommended Next Steps
+          </h3>
           <p className="text-sm text-neutral-500">Based on your learning patterns</p>
         </div>
-        <button 
-          className="text-neutral-500 hover:text-neutral-700"
+        <motion.button 
+          className="text-blue-500 hover:text-blue-700 transition-colors rounded-full w-8 h-8 flex items-center justify-center"
           onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/user/materials/recommended'] })}
+          whileHover={{ rotate: 180, scale: 1.1 }}
+          transition={{ duration: 0.3 }}
         >
           <i className="fas fa-sync-alt"></i>
-        </button>
+        </motion.button>
       </div>
       
       <motion.div 
@@ -125,52 +132,79 @@ export default function RecommendedMaterials() {
         initial="hidden"
         animate="visible"
       >
-        {recommendations?.map((rec: any) => (
-          <motion.div 
-            key={rec.id}
-            variants={itemVariants}
-            className="p-4 border border-neutral-200 rounded-lg hover:border-primary transition cursor-pointer flex items-start"
-          >
-            <div className={`w-10 h-10 rounded-full bg-${rec.iconColor || 'primary'} bg-opacity-10 flex items-center justify-center text-${rec.iconColor || 'primary'} flex-shrink-0 mr-4`}>
-              <i className={`fas fa-${rec.iconName}`}></i>
-            </div>
-            <div className="flex-1">
-              <div className="flex justify-between">
-                <h4 className="font-medium text-neutral-900">{rec.title}</h4>
-                <span className={`text-xs bg-${getPriorityColor(rec.priority)} bg-opacity-10 text-${getPriorityColor(rec.priority)} px-2 py-1 rounded-full`}>
-                  {rec.priority}
-                </span>
+        {recommendations && recommendations.length > 0 ? (
+          recommendations.map((rec: any) => (
+            <motion.div 
+              key={rec.id}
+              variants={itemVariants}
+              className="p-4 border border-neutral-100 rounded-lg shadow-sm hover:shadow transition-all duration-300 cursor-pointer flex items-start"
+              whileHover={{ 
+                y: -5, 
+                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
+                borderColor: `var(--${getPriorityColor(rec.priority)})` 
+              }}
+            >
+              <div className={`w-12 h-12 rounded-full bg-${getPriorityColor(rec.priority)} bg-opacity-10 flex items-center justify-center text-${getPriorityColor(rec.priority)} flex-shrink-0 mr-4 shadow-sm`}>
+                <i className={`fas fa-${rec.iconName || 'book'} text-lg`}></i>
               </div>
-              <p className="text-sm text-neutral-600 mt-1">{rec.description}</p>
-              <div className="mt-2 flex justify-between items-center">
-                <div className="w-48 h-2 bg-neutral-100 rounded-full overflow-hidden">
-                  <motion.div 
-                    className={`h-full bg-${getPriorityColor(rec.priority)} rounded-full`}
-                    custom={rec.progress}
-                    variants={progressVariants}
-                    initial="hidden"
-                    animate="visible"
-                  ></motion.div>
+              <div className="flex-1">
+                <div className="flex justify-between flex-wrap sm:flex-nowrap">
+                  <h4 className="font-medium text-neutral-900">{rec.title}</h4>
+                  <span className={`text-xs bg-${getPriorityColor(rec.priority)} bg-opacity-10 text-${getPriorityColor(rec.priority)} px-2 py-1 rounded-full font-medium`}>
+                    {rec.priority}
+                  </span>
                 </div>
-                <button 
-                  className="text-xs text-primary font-medium hover:text-primary-dark"
-                  onClick={() => handleContinue(rec.id, rec.progress)}
-                >
-                  {getActionText(rec.progress)}
-                </button>
+                <p className="text-sm text-neutral-600 mt-1">{rec.description}</p>
+                <div className="mt-3 flex justify-between items-center">
+                  <div className="flex-1 mr-4">
+                    <div className="flex justify-between mb-1 text-xs">
+                      <span className="text-neutral-600">Progress</span>
+                      <span className="font-medium">{rec.progress}%</span>
+                    </div>
+                    <div className="h-2 bg-neutral-100 rounded-full overflow-hidden">
+                      <motion.div 
+                        className={`h-full bg-gradient-to-r from-${getPriorityColor(rec.priority)} to-${getPriorityColor(rec.priority)}/70 rounded-full`}
+                        custom={rec.progress}
+                        variants={progressVariants}
+                        initial="hidden"
+                        animate="visible"
+                      ></motion.div>
+                    </div>
+                  </div>
+                  <motion.button 
+                    className={`text-xs bg-${getPriorityColor(rec.priority)} text-white py-2 px-3 rounded-md shadow-sm font-medium`}
+                    onClick={() => handleContinue(rec.id, rec.progress)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    disabled={rec.progress >= 100}
+                  >
+                    {getActionText(rec.progress)}
+                  </motion.button>
+                </div>
               </div>
+            </motion.div>
+          ))
+        ) : (
+          <motion.div 
+            className="text-center py-10 border border-dashed border-blue-200 rounded-lg"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <div className="text-blue-400 mb-3">
+              <i className="fas fa-check-circle text-4xl"></i>
             </div>
+            <h4 className="text-neutral-700 font-medium text-lg">All caught up!</h4>
+            <p className="text-neutral-500 text-sm mt-1 max-w-xs mx-auto">
+              You have no pending recommendations. Check back later for new materials.
+            </p>
+            <motion.button
+              className="mt-4 text-xs text-blue-600 hover:text-blue-800 py-2 px-4 border border-blue-200 rounded-md"
+              whileHover={{ y: -2 }}
+              whileTap={{ y: 0 }}
+            >
+              Browse all materials <i className="fas fa-arrow-right ml-1"></i>
+            </motion.button>
           </motion.div>
-        ))}
-
-        {recommendations?.length === 0 && (
-          <div className="text-center py-8">
-            <div className="text-neutral-400 text-lg mb-2">
-              <i className="fas fa-check-circle text-3xl"></i>
-            </div>
-            <h4 className="text-neutral-600 font-medium">All caught up!</h4>
-            <p className="text-neutral-500 text-sm mt-1">You have no pending recommendations.</p>
-          </div>
         )}
       </motion.div>
     </div>
